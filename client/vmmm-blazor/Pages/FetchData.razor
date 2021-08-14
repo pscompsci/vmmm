@@ -16,6 +16,10 @@ else
             <tr>
                 <th>Name</th>
                 <th>Parent</th>
+                <th>Network</th>
+                <th>Operating System</th>
+                <th>IP Address</th>
+                <th>State</th>
                 <th>Overall Status</th>
             </tr>
         </thead>
@@ -25,6 +29,10 @@ else
                 <tr>
                     <td>@vm.Name</td>
                     <td>@vm.Parent</td>
+                    <td>@vm.Network</td>
+                    <td>@vm.OperatingSystem</td>
+                    <td>@vm.IPAddress</td>
+                    <td>@vm.State</td>
                     <td>@vm.OverallStatus</td>
                 </tr>
             }
@@ -44,6 +52,10 @@ else
     {
         public string Name { get; set; }
         public string Parent { get; set; }
+        public string Network { get; set; }
+        public string OperatingSystem { get; set; }
+        public string IPAddress { get; set; }
+        public string State { get; set; }
         public string OverallStatus { get; set; }
     }
 }
