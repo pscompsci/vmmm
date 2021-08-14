@@ -12,10 +12,14 @@ import (
 )
 
 type VirtualMachine struct {
-	ID            int    `db:"vm_id" json:"id,omitempty"`
-	Name          string `db:"name"  json:"name"`
-	Parent        string `db:"parent" json:"parent"`
-	OverallStatus string `db:"overall_status" json:"overallStatus"`
+	ID              int    `db:"vm_id" json:"id,omitempty"`
+	Name            string `db:"name"  json:"name"`
+	Parent          string `db:"parent" json:"parent"`
+	Network         string `db:"network" json:"network"`
+	OperatingSystem string `db:"operating_system" json:"operatingSystem"`
+	IPAddress       string `db:"ipAddress" json:"ipAddress"`
+	State           string `db:"state" json:"state,omitempty"`
+	OverallStatus   string `db:"overall_status" json:"overallStatus"`
 }
 
 type Repository interface {
@@ -60,7 +64,7 @@ func (e *Explorer) GetVMListFromHost(ctx context.Context, url string) (*[]Virtua
 	defer v.Destroy(ctx)
 
 	var movms []mo.VirtualMachine
-	err = v.Retrieve(ctx, []string{"VirtualMachine"}, []string{"summary", "parent"}, &movms)
+	err = v.Retrieve(ctx, []string{"VirtualMachine"}, []string{}, &movms)
 	if err != nil {
 		return &vms, err
 	}
@@ -68,9 +72,13 @@ func (e *Explorer) GetVMListFromHost(ctx context.Context, url string) (*[]Virtua
 	// Print summary per vm (see also: govc/vm/info.go)
 	for _, movm := range movms {
 		vm := VirtualMachine{
-			Name:          movm.Summary.Config.Name,
-			Parent:        movm.Parent.Value,
-			OverallStatus: string(movm.Summary.OverallStatus),
+			Name:            movm.Summary.Config.Name,
+			Parent:          movm.Parent.Value,
+			Network:         movm.Network[len(movm.Network)-1].Value,
+			OperatingSystem: movm.Guest.GuestFullName,
+			IPAddress:       movm.Guest.IpAddress,
+			State:           movm.Guest.GuestState,
+			OverallStatus:   string(movm.Summary.OverallStatus),
 		}
 		vms = append(vms, vm)
 	}

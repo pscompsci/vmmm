@@ -53,7 +53,7 @@ func (s *server) handleIndex() http.HandlerFunc {
 		}
 		// TODO: Remove this and put into debug logging
 		for _, vm := range *vms {
-			fmt.Printf("%s, %s, %s\n", vm.Name, vm.Parent, vm.OverallStatus)
+			fmt.Printf("%s, %s, %s, %s\n", vm.Name, vm.Parent, vm.IPAddress, vm.OverallStatus)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
