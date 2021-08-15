@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/pscompsci/vmmm/internal/vm"
+
 	"github.com/vmware/govmomi/session/cache"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
@@ -11,19 +13,8 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 )
 
-type VirtualMachine struct {
-	ID              int    `db:"vm_id" json:"id,omitempty"`
-	Name            string `db:"name"  json:"name"`
-	Parent          string `db:"parent" json:"parent"`
-	Network         string `db:"network" json:"network"`
-	OperatingSystem string `db:"operating_system" json:"operatingSystem"`
-	IPAddress       string `db:"ipAddress" json:"ipAddress"`
-	State           string `db:"state" json:"state,omitempty"`
-	OverallStatus   string `db:"overall_status" json:"overallStatus"`
-}
-
 type Repository interface {
-	GetVMs(ctx context.Context) (*[]VirtualMachine, error)
+	GetVMs(ctx context.Context) (*[]vm.VirtualMachine, error)
 }
 
 type Explorer struct {
@@ -31,21 +22,21 @@ type Explorer struct {
 }
 
 // TODO: Clean this up significantly. It works fine, but is too complicated. Simplify and split
-func (e *Explorer) GetVMListFromHost(ctx context.Context, url string) (*[]VirtualMachine, error) {
-	var vms []VirtualMachine
+func (e *Explorer) GetVMListFromHost(ctx context.Context, url string, insecure bool) (*[]vm.VirtualMachine, error) {
+	var vms []vm.VirtualMachine
 
-	u, err := soap.ParseURL(url)
+	u, err := stringToURL(url)
 	if err != nil {
 		return nil, err
 	}
 
 	// Override username and/or password as required
-	processOverride(u)
+	processURL(u)
 
 	// Share govc's session cache
 	s := &cache.Session{
 		URL:      u,
-		Insecure: true,
+		Insecure: insecure,
 	}
 
 	c := new(vim25.Client)
@@ -69,14 +60,26 @@ func (e *Explorer) GetVMListFromHost(ctx context.Context, url string) (*[]Virtua
 		return &vms, err
 	}
 
+	var dss []mo.Datastore
+	err = v.Retrieve(ctx, []string{"Datastore"}, []string{"summary"}, &dss)
+	if err != nil {
+		return &vms, err
+	}
+
 	// Print summary per vm (see also: govc/vm/info.go)
 	for _, movm := range movms {
-		vm := VirtualMachine{
+		ds := getDatastore(dss, movm.Summary.Config.Name)
+		vm := vm.VirtualMachine{
 			Name:            movm.Summary.Config.Name,
 			Parent:          movm.Parent.Value,
 			Network:         movm.Network[len(movm.Network)-1].Value,
 			OperatingSystem: movm.Guest.GuestFullName,
 			IPAddress:       movm.Guest.IpAddress,
+			CPU:             movm.Config.Hardware.NumCPU,
+			Memory:          movm.Config.Hardware.MemoryMB,
+			DiskType:        ds.Summary.Type,
+			DiskCapacity:    int32(ds.Summary.Capacity),
+			DiskFreeSpace:   int32(ds.Summary.FreeSpace),
 			State:           movm.Guest.GuestState,
 			OverallStatus:   string(movm.Summary.OverallStatus),
 		}
@@ -86,7 +89,20 @@ func (e *Explorer) GetVMListFromHost(ctx context.Context, url string) (*[]Virtua
 	return &vms, nil
 }
 
-func processOverride(u *url.URL) {
+func getDatastore(dss []mo.Datastore, name string) mo.Datastore {
+	for _, ds := range dss {
+		if ds.Summary.Name == name {
+			return ds
+		}
+	}
+	return mo.Datastore{}
+}
+
+func stringToURL(url string) (*url.URL, error) {
+	return soap.ParseURL(url)
+}
+
+func processURL(u *url.URL) {
 	var envUsername string
 	var envPassword string
 
@@ -118,6 +134,6 @@ func processOverride(u *url.URL) {
 	}
 }
 
-func (e *Explorer) GetVMListFromDB(ctx context.Context) (*[]VirtualMachine, error) {
+func (e *Explorer) GetVMListFromDB(ctx context.Context) (*[]vm.VirtualMachine, error) {
 	return e.explorerRepository.GetVMs(ctx)
 }

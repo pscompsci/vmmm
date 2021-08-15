@@ -19,6 +19,11 @@ else
                 <th>Network</th>
                 <th>Operating System</th>
                 <th>IP Address</th>
+                <th>CPU</th>
+                <th>Memory</th>
+                <th>Disk Type</th>
+                <th>Disk Capacity</th>
+                <th>Disk Free Space</th>
                 <th>State</th>
                 <th>Overall Status</th>
             </tr>
@@ -32,6 +37,11 @@ else
                     <td>@vm.Network</td>
                     <td>@vm.OperatingSystem</td>
                     <td>@vm.IPAddress</td>
+                    <td>@vm.CPU</td>
+                    <td>@vm.Memory</td>
+                    <td>@vm.DiskType</td>
+                    <td>@vm.DiskCapacity</td>
+                    <td>@vm.DiskFreeSpace</td>
                     <td>@vm.State</td>
                     <td>@vm.OverallStatus</td>
                 </tr>
@@ -50,12 +60,17 @@ else
     }
     public class VM
     {
-        public string Name { get; set; }
-        public string Parent { get; set; }
-        public string Network { get; set; }
-        public string OperatingSystem { get; set; }
-        public string IPAddress { get; set; }
-        public string State { get; set; }
-        public string OverallStatus { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Parent { get; set; } = string.Empty;
+        public string Network { get; set; } = string.Empty;
+        public string OperatingSystem { get; set; } = string.Empty;
+        public string IPAddress { get; set; } = string.Empty;
+        public int CPU { get; set; }
+        public int Memory { get; set; }
+        public string DiskType { get; set; } = string.Empty;
+        public int DiskCapacity { get; set; }
+        public int DiskFreeSpace { get; set; }
+        public string State { get; set; } = string.Empty;
+        public string OverallStatus { get; set; } = string.Empty;
     }
 }

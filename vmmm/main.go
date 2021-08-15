@@ -47,7 +47,7 @@ func (s *server) routes() {
 func (s *server) handleIndex() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		e := explorer.Explorer{}
-		vms, err := e.GetVMListFromHost(context.Background(), "https://root:password@192.168.0.150/sdk")
+		vms, err := e.GetVMListFromHost(context.Background(), "https://root:password@192.168.0.150/sdk", true)
 		if err != nil {
 			log.Fatalf("Could not obtain vm list: %v\n", err)
 		}
